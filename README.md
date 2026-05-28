@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CryptoTalk – Secure Encrypted Chat Application
 
 ## Introduction
@@ -192,3 +193,6 @@ CryptoTalk represents a significant step towards making advanced digital privacy
 ---
 *Created by: Shaila Mandkulkar, Karan Lingayat, and Parth Kelaskar*
 *Powered by Android, Kotlin, and Firebase*
+=======
+# cryptotalk
+>>>>>>> 466c9d1fdd5dc088f1d7e6b611409af320de36d4
