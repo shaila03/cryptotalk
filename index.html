@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CryptoTalk – Privacy-First Secure Messaging</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root{--bg:#04060d;--bg2:#070c18;--cyan:#00e5ff;--green:#00ff88;--purple:#8b5cf6;--border:rgba(0,229,255,0.12);--text:#c8d8e8;--dim:#4a6070;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none;}
+  #cursor{position:fixed;width:10px;height:10px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference;}
+  #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid var(--cyan);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all 0.15s ease;opacity:0.5;}
+  #particle-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 4rem;background:rgba(4,6,13,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+  .nav-logo{display:flex;align-items:center;gap:0.75rem;text-decoration:none;}
+  .nav-logo img{height:44px;filter:drop-shadow(0 0 8px var(--cyan));}
+  .nav-logo span{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:0.08em;}
+  .nav-links{display:flex;gap:2rem;list-style:none;}
+  .nav-links a{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--dim);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;transition:color 0.3s;}
+  .nav-links a:hover{color:var(--cyan);text-shadow:0 0 10px var(--cyan);}
+  .nav-cta{font-family:'Orbitron',monospace;font-size:0.75rem;font-weight:600;padding:0.6rem 1.4rem;background:transparent;border:1px solid var(--cyan);color:var(--cyan);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.3s;position:relative;overflow:hidden;}
+  .nav-cta::before{content:'';position:absolute;inset:0;background:var(--cyan);transform:translateX(-100%);transition:transform 0.3s;z-index:-1;}
+  .nav-cta:hover::before{transform:translateX(0);}
+  .nav-cta:hover{color:#000;}
+
+  /* HERO */
+  #hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:8rem 2rem 4rem;}
+  #hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 70% at 50% 50%,black 30%,transparent 80%);}
+  .hero-row{display:flex;align-items:center;justify-content:center;gap:5rem;flex-wrap:wrap;max-width:1200px;margin:0 auto;}
+  .hero-left{flex:1;min-width:320px;}
+  .hero-badge{display:inline-flex;align-items:center;gap:0.5rem;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--green);border:1px solid rgba(0,255,136,0.3);padding:0.35rem 1rem;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:2rem;animation:pulse-border 2s infinite;}
+  .hero-badge::before{content:'●';color:var(--green);animation:blink 1.5s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+  @keyframes pulse-border{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,0.2)}50%{box-shadow:0 0 0 6px rgba(0,255,136,0)}}
+  .hero-title{font-family:'Orbitron',monospace;font-size:clamp(3rem,8vw,7rem);font-weight:900;line-height:1;color:#fff;letter-spacing:-0.02em;margin-bottom:0.5rem;}
+  .hero-title.cyan{color:var(--cyan);text-shadow:0 0 40px var(--cyan),0 0 80px rgba(0,229,255,0.4);}
+  .hero-sub{font-family:'Orbitron',monospace;font-size:clamp(0.65rem,1.8vw,0.95rem);font-weight:400;letter-spacing:0.35em;text-transform:uppercase;color:var(--purple);margin-bottom:2rem;}
+  .hero-desc{max-width:580px;font-size:1.05rem;line-height:1.8;color:#7a9ab0;margin-bottom:2.5rem;}
+  .hero-btns{display:flex;gap:1.25rem;flex-wrap:wrap;}
+  .btn-p{display:inline-flex;align-items:center;gap:0.6rem;font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;padding:1rem 2.2rem;background:var(--cyan);color:#000;text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.3s;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);}
+  .btn-p:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,229,255,0.5);}
+  .btn-s{display:inline-flex;align-items:center;gap:0.6rem;font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:600;padding:1rem 2.2rem;background:transparent;border:1px solid rgba(255,255,255,0.2);color:#fff;text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.3s;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);}
+  .btn-s:hover{border-color:var(--cyan);color:var(--cyan);transform:translateY(-3px);}
+  .terminal{background:#020508;border:1px solid rgba(0,229,255,0.2);padding:1.5rem;margin-top:2.5rem;max-width:520px;font-family:'JetBrains Mono',monospace;font-size:0.77rem;line-height:2;position:relative;}
+  .terminal::before{content:'● ● ●';position:absolute;top:0.6rem;left:1rem;color:var(--dim);font-size:0.5rem;letter-spacing:0.4rem;}
+  .t-cm{color:#4a7060;}.t-cmd{color:var(--cyan);}.t-out{color:var(--green);}.t-warn{color:#ffaa00;}.t-cur::after{content:'█';animation:blink 1s infinite;color:var(--cyan);}
+  .scroll-hint{margin-top:5rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;animation:float 3s ease-in-out infinite;}
+  .scroll-hint span{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--dim);letter-spacing:0.2em;text-transform:uppercase;}
+  .scroll-line{width:1px;height:60px;background:linear-gradient(to bottom,var(--cyan),transparent);}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+  /* PHONE */
+  .phone-scene{width:280px;height:560px;transform-style:preserve-3d;animation:r3d 8s ease-in-out infinite;filter:drop-shadow(0 0 60px rgba(0,229,255,0.25));}
+  @keyframes r3d{0%{transform:rotateY(-15deg) rotateX(5deg)}50%{transform:rotateY(15deg) rotateX(-3deg)}100%{transform:rotateY(-15deg) rotateX(5deg)}}
+  .ph-body{width:280px;height:560px;border-radius:38px;background:linear-gradient(145deg,#1a2535,#0d1520);border:1.5px solid rgba(0,229,255,0.3);box-shadow:0 0 0 1px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.06),0 30px 80px rgba(0,0,0,0.8);position:relative;overflow:hidden;}
+  .ph-scr{position:absolute;inset:12px;border-radius:28px;background:#04060d;overflow:hidden;}
+  .ph-notch{width:100px;height:28px;background:#04060d;border-radius:0 0 18px 18px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:10;}
+  .ph-status{padding:10px 20px 0;display:flex;justify-content:space-between;}
+  .ph-status span{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cyan);}
+  .ph-chat{padding:16px 14px;}
+  .msg{margin-bottom:10px;display:flex;flex-direction:column;}
+  .msg.r .bbl{background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);border-radius:14px 14px 14px 4px;padding:8px 12px;align-self:flex-start;}
+  .msg.s .bbl{background:rgba(0,229,255,0.18);border:1px solid rgba(0,229,255,0.35);border-radius:14px 14px 4px 14px;padding:8px 12px;align-self:flex-end;}
+  .bbl span{font-family:'JetBrains Mono',monospace;font-size:8px;color:#c8d8e8;display:block;}
+  .bbl .enc{font-size:7px;color:var(--green);margin-top:3px;}
+  .ph-bar{margin:8px 14px;padding:6px 10px;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:8px;display:flex;align-items:center;gap:6px;}
+  .ph-bar span{font-family:'JetBrains Mono',monospace;font-size:6.5px;color:var(--green);}
+
+  /* SECTIONS */
+  section{position:relative;z-index:1;padding:8rem 2rem;}
+  .container{max-width:1200px;margin:0 auto;}
+  .sec-label{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--cyan);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:0.75rem;}
+  .sec-label::before{content:'//';color:var(--purple);}
+  .sec-title{font-family:'Orbitron',monospace;font-size:clamp(2rem,5vw,3.5rem);font-weight:700;color:#fff;margin-bottom:1.5rem;line-height:1.1;}
+  .sec-title .hl{color:var(--cyan);}
+  .sec-desc{max-width:580px;font-size:1rem;line-height:1.8;color:#7a9ab0;}
+  .reveal{opacity:0;transform:translateY(30px);transition:all 0.7s ease;}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+
+  /* STATS */
+  .stats-bar{display:flex;justify-content:center;flex-wrap:wrap;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(0,229,255,0.02);}
+  .stat-item{padding:2.5rem 3rem;text-align:center;border-right:1px solid var(--border);flex:1;min-width:160px;}
+  .stat-item:last-child{border-right:none;}
+  .stat-num{font-family:'Orbitron',monospace;font-size:2.5rem;font-weight:900;color:var(--cyan);display:block;}
+  .stat-lbl{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--dim);letter-spacing:0.15em;text-transform:uppercase;margin-top:0.4rem;}
+
+  /* FEATURES */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5px;margin-top:5rem;background:var(--border);}
+  .feat-card{background:var(--bg2);padding:2.5rem 2rem;transition:all 0.3s;position:relative;overflow:hidden;cursor:default;}
+  .feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);transform:scaleX(0);transition:transform 0.4s;}
+  .feat-card:hover::before{transform:scaleX(1);}
+  .feat-card:hover{background:rgba(0,229,255,0.03);transform:translateY(-4px);}
+  .feat-icon{font-size:2.2rem;margin-bottom:1.25rem;display:block;}
+  .feat-num{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--dim);letter-spacing:0.2em;margin-bottom:0.75rem;}
+  .feat-card h3{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:#fff;margin-bottom:0.75rem;}
+  .feat-card p{font-size:0.87rem;line-height:1.7;color:#6a8090;}
+  .feat-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.6rem;padding:0.2rem 0.6rem;margin-top:0.75rem;border:1px solid rgba(0,229,255,0.2);color:var(--cyan);letter-spacing:0.1em;}
+
+  /* ARCH */
+  #architecture{background:linear-gradient(180deg,var(--bg) 0%,#030810 50%,var(--bg) 100%);}
+  .arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:4rem;align-items:start;}
+  .arch-layers{display:flex;flex-direction:column;gap:1px;background:var(--border);}
+  .arch-layer{padding:1.5rem 1.75rem;background:var(--bg2);transition:all 0.3s;cursor:default;display:flex;gap:1rem;align-items:flex-start;}
+  .arch-layer:hover{background:rgba(0,229,255,0.04);padding-left:2.25rem;}
+  .arch-layer-ic{font-size:1.5rem;flex-shrink:0;}
+  .arch-layer h4{font-family:'Orbitron',monospace;font-size:0.85rem;color:#fff;margin-bottom:0.35rem;}
+  .arch-layer p{font-size:0.82rem;color:#6a8090;line-height:1.6;}
+  .arch-layer .lt{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--purple);margin-top:0.3rem;}
+  .code-block{background:#020508;border:1px solid rgba(0,229,255,0.15);padding:1.5rem;font-family:'JetBrains Mono',monospace;font-size:0.74rem;line-height:1.9;position:relative;overflow:hidden;margin-bottom:1.25rem;}
+  .code-block::before{content:'kotlin';position:absolute;top:0.6rem;right:1rem;font-size:0.6rem;color:var(--purple);letter-spacing:0.1em;}
+  .kw{color:#ff79c6;}.fn{color:var(--cyan);}.str{color:var(--green);}.cm{color:#4a6070;}.nm{color:#ffaa00;}
+
+  /* DISGUISE */
+  .dis-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:4rem;align-items:center;}
+  .dis-modes{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .mode-card{padding:1.75rem 1.5rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);transition:all 0.3s;cursor:default;position:relative;overflow:hidden;}
+  .mode-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,229,255,0.05),transparent);opacity:0;transition:opacity 0.3s;}
+  .mode-card:hover::after{opacity:1;}
+  .mode-card:hover{border-color:rgba(0,229,255,0.4);transform:scale(1.02);}
+  .mode-ic{font-size:2rem;margin-bottom:0.75rem;}
+  .mode-card h4{font-family:'Orbitron',monospace;font-size:0.85rem;color:#fff;margin-bottom:0.5rem;}
+  .mode-card p{font-size:0.78rem;color:#5a7080;line-height:1.6;}
+  .mode-unlock{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--green);margin-top:0.5rem;}
+
+  /* CRYPTO FLOW */
+  #crypto{text-align:center;}
+  .c-flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;margin:4rem 0;}
+  .c-step{display:flex;flex-direction:column;align-items:center;gap:0.75rem;padding:1.5rem 1.25rem;background:rgba(0,229,255,0.03);border:1px solid var(--border);min-width:125px;transition:all 0.3s;}
+  .c-step:hover{border-color:var(--cyan);background:rgba(0,229,255,0.07);transform:translateY(-6px);}
+  .c-step .si{font-size:1.8rem;}
+  .c-step .sn{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--dim);letter-spacing:0.12em;}
+  .c-step .sl{font-family:'Orbitron',monospace;font-size:0.7rem;font-weight:700;color:#fff;text-align:center;}
+  .c-step .sd{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--cyan);}
+  .c-arrow{font-size:1.5rem;color:var(--cyan);opacity:0.4;padding:0 0.2rem;}
+  .c-tags{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;}
+  .ctb{padding:1.5rem 2rem;border:1px solid var(--border);background:rgba(0,229,255,0.03);text-align:center;min-width:190px;}
+  .ctb .cl{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--dim);margin-bottom:0.5rem;}
+  .ctb .cv{font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);}
+  .ctb .cs{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#5a7080;margin-top:0.25rem;}
+  .ctb.gr .cv{color:var(--green);}
+  .ctb.pu .cv{color:var(--purple);}
+
+  /* THREATS */
+  .thr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;margin-top:4rem;}
+  .thr-card{padding:2rem 1.75rem;border:1px solid var(--border);background:rgba(255,255,255,0.01);transition:all 0.3s;}
+  .thr-card:hover{border-color:rgba(255,68,102,0.4);background:rgba(255,68,102,0.025);}
+  .thr-head{display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;}
+  .thr-icon{font-size:1.5rem;}
+  .thr-card h4{font-family:'Orbitron',monospace;font-size:0.85rem;color:#fff;}
+  .thr-card p{font-size:0.85rem;color:#6a8090;line-height:1.7;}
+  .mitig{margin-top:1rem;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--green);}
+
+  /* COMPARISON */
+  #comparison{background:var(--bg2);}
+  .cmp-tbl{width:100%;border-collapse:collapse;margin-top:3rem;}
+  .cmp-tbl th{font-family:'Orbitron',monospace;font-size:0.75rem;font-weight:700;padding:1.25rem 1.5rem;text-align:left;border-bottom:1px solid var(--border);letter-spacing:0.05em;}
+  .cmp-tbl th:first-child{color:var(--dim);}
+  .cmp-tbl th.ours{color:var(--cyan);}
+  .cmp-tbl td{padding:1.1rem 1.5rem;border-bottom:1px solid rgba(0,229,255,0.05);font-size:0.87rem;}
+  .cmp-tbl tr:hover td{background:rgba(0,229,255,0.02);}
+  .cmp-tbl td:first-child{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:#8a9aaa;}
+  .ck{color:var(--green);font-size:1rem;}.cr{color:#ff4466;font-size:1rem;}.pt{color:#ffaa00;font-size:0.82rem;font-family:'JetBrains Mono',monospace;}
+  .hlr td{background:rgba(0,229,255,0.02) !important;}
+
+  /* MATH */
+  #math{background:linear-gradient(180deg,var(--bg) 0%,#030810 60%,var(--bg) 100%);}
+  .math-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:4rem;}
+  .math-card{padding:2.5rem 2rem;border:1px solid var(--border);background:rgba(0,229,255,0.02);}
+  .math-card h4{font-family:'Orbitron',monospace;font-size:0.9rem;color:var(--cyan);margin-bottom:1.25rem;}
+  .math-steps{list-style:none;display:flex;flex-direction:column;gap:0.65rem;}
+  .math-steps li{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:#7a9ab0;line-height:1.6;padding-left:1.25rem;position:relative;}
+  .math-steps li::before{content:'›';position:absolute;left:0;color:var(--cyan);}
+  .mf{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--green);background:rgba(0,255,136,0.05);padding:0.1rem 0.4rem;}
+
+  /* ROADMAP */
+  .rm-list{margin-top:4rem;display:flex;flex-direction:column;}
+  .rm-item{display:flex;gap:2.5rem;padding:2.5rem 0;border-bottom:1px solid var(--border);align-items:flex-start;transition:all 0.3s;}
+  .rm-item:hover{padding-left:1rem;}
+  .rm-tag{font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:0.3rem 0.8rem;letter-spacing:0.1em;white-space:nowrap;height:fit-content;margin-top:0.25rem;}
+  .td{background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);}
+  .nx{background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);color:var(--cyan);}
+  .fu{background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:var(--purple);}
+  .rm-ph{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--dim);letter-spacing:0.15em;margin-bottom:0.25rem;}
+  .rm-item h4{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:#fff;margin-bottom:0.5rem;}
+  .rm-item p{font-size:0.87rem;color:#6a8090;line-height:1.7;}
+
+  /* DOWNLOAD */
+  #download{text-align:center;background:radial-gradient(ellipse 100% 80% at 50% 100%,rgba(0,229,255,0.08) 0%,transparent 70%);}
+  .dl-card{display:inline-flex;flex-direction:column;align-items:center;padding:4rem 5rem;border:1px solid var(--border);background:rgba(0,229,255,0.03);margin-top:3rem;position:relative;overflow:hidden;}
+  .dl-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,229,255,0.04),transparent);}
+  .qr-box{width:120px;height:120px;border:1px solid var(--border);margin-bottom:2rem;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;}
+  .qr-box::before,.qr-box::after{content:'';position:absolute;width:20px;height:20px;border-color:var(--cyan);border-style:solid;}
+  .qr-box::before{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+  .qr-box::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+  .qr-box span{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--dim);letter-spacing:0.1em;text-align:center;line-height:1.6;}
+  .dl-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2rem;position:relative;z-index:1;}
+  .dl-btn{display:inline-flex;align-items:center;gap:0.75rem;padding:1rem 2rem;border:1px solid var(--border);background:rgba(255,255,255,0.03);text-decoration:none;transition:all 0.3s;min-width:195px;}
+  .dl-btn:hover{border-color:var(--cyan);background:rgba(0,229,255,0.07);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,229,255,0.15);}
+  .dl-btn .di{font-size:2rem;}
+  .dl-btn .dt small{display:block;font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;}
+  .dl-btn .dt strong{display:block;font-family:'Orbitron',monospace;font-size:0.85rem;color:#fff;margin-top:0.1rem;}
+  .dl-bgs{margin-top:2rem;display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;position:relative;z-index:1;}
+  .dl-bg{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--green);}
+
+  /* GLITCH */
+  .glitch{position:relative;}
+  .glitch::before,.glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%;font-family:inherit;font-size:inherit;font-weight:inherit;color:inherit;}
+  .glitch::before{color:var(--cyan);clip:rect(24px,550px,90px,0);animation:g1 3s infinite linear alternate-reverse;}
+  .glitch::after{color:var(--purple);clip:rect(85px,550px,140px,0);animation:g2 3s infinite linear alternate-reverse;}
+  @keyframes g1{0%{clip:rect(42px,9999px,44px,0);transform:skew(0.3deg)}20%{clip:rect(12px,9999px,59px,0)}40%{clip:rect(48px,9999px,29px,0)}60%{clip:rect(3px,9999px,67px,0)}80%{clip:rect(77px,9999px,35px,0)}100%{clip:rect(22px,9999px,82px,0)}}
+  @keyframes g2{0%{clip:rect(65px,9999px,119px,0);transform:skew(0.2deg)}20%{clip:rect(34px,9999px,91px,0)}40%{clip:rect(5px,9999px,45px,0)}60%{clip:rect(100px,9999px,115px,0)}80%{clip:rect(55px,9999px,75px,0)}100%{clip:rect(15px,9999px,55px,0)}}
+  body::after{content:'';position:fixed;inset:0;z-index:200;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;}
+
+  /* FOOTER */
+  footer{text-align:center;padding:4rem 2rem;border-top:1px solid var(--border);position:relative;z-index:1;}
+  .ft-logo{font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:#fff;letter-spacing:0.1em;margin-bottom:1rem;}
+  .ft-logo span{color:var(--cyan);}
+  .ft-tag{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--dim);letter-spacing:0.18em;margin-bottom:2rem;}
+  .ft-links{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;}
+  .ft-links a{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--dim);text-decoration:none;letter-spacing:0.1em;transition:color 0.3s;}
+  .ft-links a:hover{color:var(--cyan);}
+  .ft-copy{font-size:0.78rem;color:var(--dim);}
+
+  @media(max-width:768px){nav{padding:1rem 1.5rem;}.nav-links{display:none;}.hero-row{flex-direction:column;gap:3rem;}.arch-grid,.dis-grid,.math-grid{grid-template-columns:1fr;}.stat-item{min-width:140px;padding:1.5rem;}.stat-num{font-size:1.8rem;}.dl-card{padding:2.5rem 1.5rem;}}
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+<canvas id="particle-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <img src="/mnt/user-data/uploads/Logo.png" alt="CryptoTalk" onerror="this.style.display='none'"/>
+    <span>CRYPTOTALK</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#disguise">Disguise</a></li>
+    <li><a href="#crypto">Encryption</a></li>
+    <li><a href="#threats">Threats</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+  </ul>
+  <a class="nav-cta" href="#download">↓ Download</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-row">
+    <div class="hero-left">
+      <div class="hero-badge">Zero-Trust Architecture · Active</div>
+      <h1 class="hero-title glitch" data-text="CRYPTO">CRYPTO</h1>
+      <h1 class="hero-title cyan">TALK</h1>
+      <p class="hero-sub">Privacy-First Secure Mobile Communication</p>
+      <p class="hero-desc">A zero-trust messaging platform where even the server is treated as a potential adversary. Hardware-backed TEE keys. Disguise mode. Digital sovereignty returned to you.</p>
+      <div class="hero-btns">
+        <a class="btn-p" href="#download">⬇ Download App</a>
+        <a class="btn-s" href="#features">Explore Features →</a>
+      </div>
+      <div class="terminal reveal">
+        <div class="t-cm">// CryptoTalk Zero-Trust Stack v1.0.4</div>
+        <div class="t-cmd">$ init --keystore android_hardware_tee</div>
+        <div class="t-out">✓ RSA-2048 KeyPair generated in TEE</div>
+        <div class="t-cmd">$ set --cipher AES/GCM/NoPadding --bits 256</div>
+        <div class="t-out">✓ AEAD authenticated encryption armed</div>
+        <div class="t-warn">⚠ Root binary detected: Integrity shield raised</div>
+        <div class="t-out">✓ Disguise: CALCULATOR mode active</div>
+        <div class="t-cmd t-cur">$ _</div>
+      </div>
+    </div>
+    <div>
+      <div class="phone-scene">
+        <div class="ph-body">
+          <div class="ph-scr">
+            <div class="ph-notch"></div>
+            <div class="ph-status"><span>CRYPTOTALK</span><span>🔒 E2EE</span></div>
+            <div style="padding:6px 14px;"><div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:rgba(0,229,255,0.35);">— ZERO KNOWLEDGE CHANNEL —</div></div>
+            <div class="ph-chat">
+              <div class="msg r"><div class="bbl"><span>Rendezvous at 2100?</span><div class="enc">🔐 AES-256-GCM verified</div></div></div>
+              <div class="msg s"><div class="bbl"><span>Confirmed. Coordinates sent.</span><div class="enc">🔐 RSA-2048 wrapped key</div></div></div>
+              <div class="msg r"><div class="bbl"><span>Qx9p+fE2wR4mKo7n...</span><div class="enc">🔒 Ciphertext · IV: 12-byte</div></div></div>
+              <div class="msg s"><div class="bbl"><span>🔥 Panic wipe armed</span><div class="enc">✓ Hardware TEE active</div></div></div>
+            </div>
+            <div class="ph-bar"><span>🛡</span><span>AES-256 · RSA-2048 · Zero-Knowledge Server</span></div>
+            <div style="padding:10px 14px;display:flex;gap:8px;">
+              <div style="flex:1;background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);border-radius:20px;padding:6px 10px;"><span style="font-family:'JetBrains Mono',monospace;font-size:7px;color:rgba(255,255,255,0.3);">Encrypted message...</span></div>
+              <div style="width:28px;height:28px;background:var(--cyan);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;">▶</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span>Scroll to Explore</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- STATS -->
+<div class="container">
+  <div class="stats-bar reveal">
+    <div class="stat-item"><span class="stat-num" data-count="2048">0</span><div class="stat-lbl">RSA Key Bits</div></div>
+    <div class="stat-item"><span class="stat-num" data-count="256">0</span><div class="stat-lbl">AES Key Bits</div></div>
+    <div class="stat-item"><span class="stat-num" data-count="2">0</span><div class="stat-lbl">Disguise Modes</div></div>
+    <div class="stat-item"><span class="stat-num" data-count="12">0</span><div class="stat-lbl">IV Bytes / Message</div></div>
+    <div class="stat-item"><span class="stat-num">0</span><div class="stat-lbl">Plaintext on Server</div></div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="reveal">
+      <div class="sec-label">Working Features</div>
+      <h2 class="sec-title">Everything That's<br/><span class="hl">Live &amp; Working</span></h2>
+      <p class="sec-desc">CryptoTalk is a fully functional high-security messaging platform. Every feature below is implemented and operational — from hardware-backed encryption to functional decoy UIs.</p>
+    </div>
+
+    <!-- CATEGORY 1: ENCRYPTION -->
+    <div class="reveal" style="margin-top:4rem;">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--cyan);letter-spacing:0.2em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(0,229,255,0.2);background:rgba(0,229,255,0.04);">01 · Secure Messaging &amp; Encryption</div>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+    </div>
+    <div class="feat-grid reveal">
+      <div class="feat-card"><span class="feat-num">01.1</span><span class="feat-icon">🔐</span><h3>Hybrid Encryption Engine</h3><p>RSAPadding for secure session key exchange paired with AES-256-GCM for message content. Every message uses a unique randomly generated 256-bit AES key — ensuring perfect forward secrecy principles.</p><span class="feat-tag">RSA + AES-256-GCM</span></div>
+      <div class="feat-card"><span class="feat-num">01.2</span><span class="feat-icon">🏦</span><h3>Android Keystore Storage</h3><p>Private keys are stored exclusively in the Android Keystore — hardware-backed on supported devices. Keys never leave the physical device. Decryption operations remain inside the secure enclave at all times.</p><span class="feat-tag">Hardware-Backed TEE</span></div>
+      <div class="feat-card"><span class="feat-num">01.3</span><span class="feat-icon">🔄</span><h3>Perfect Forward Secrecy</h3><p>New AES keys and unique Initialization Vectors are generated for every single message. Even if one session key is ever compromised, past and future messages remain completely unaffected.</p><span class="feat-tag">Per-Message Keys · Unique IVs</span></div>
+      <div class="feat-card"><span class="feat-num">01.4</span><span class="feat-icon">💬</span><h3>Real-Time Messaging UI</h3><p>Full-featured real-time conversation list with live updates. Interactive chat screens with message state indicators. New conversation creation and seamless contact discovery built into the interface.</p><span class="feat-tag">Live · Reactive · Compose</span></div>
+    </div>
+
+    <!-- CATEGORY 2: STEALTH -->
+    <div class="reveal" style="margin-top:3rem;">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--purple);letter-spacing:0.2em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(139,92,246,0.2);background:rgba(139,92,246,0.04);">02 · Stealth &amp; Disguise Mode</div>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+    </div>
+    <div class="feat-grid reveal">
+      <div class="feat-card"><span class="feat-num">02.1</span><span class="feat-icon">🎭</span><h3>Dynamic App Disguise</h3><p>Change the home screen icon and application name on the fly — at runtime. Switch between "Calculator", "Weather", and "CryptoTalk" modes without reinstalling or rebooting the device.</p><span class="feat-tag">Icon &amp; Name Change · Live</span></div>
+      <div class="feat-card"><span class="feat-num">02.2</span><span class="feat-icon">🧮</span><h3>Functional Fake Calculator UI</h3><p>When in Calculator mode, the app presents a fully working arithmetic calculator — not a blank screen. It acts as a convincing decoy to prevent unauthorized access or discovery by anyone picking up the device.</p><span class="feat-tag">Fully Functional Decoy</span></div>
+      <div class="feat-card"><span class="feat-num">02.3</span><span class="feat-icon">⚙</span><h3>Disguise Settings Panel</h3><p>A dedicated, in-app settings panel to configure, preview, and apply stealth modes. Manage which disguise is active, change it at any time, and confirm the change takes effect on the home screen instantly.</p><span class="feat-tag">Management Interface</span></div>
+    </div>
+
+    <!-- CATEGORY 3: SECURITY -->
+    <div class="reveal" style="margin-top:3rem;">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--green);letter-spacing:0.2em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(0,255,136,0.2);background:rgba(0,255,136,0.04);">03 · Advanced Security &amp; Data Protection</div>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+    </div>
+    <div class="feat-grid reveal">
+      <div class="feat-card"><span class="feat-num">03.1</span><span class="feat-icon">💥</span><h3>Panic Wipe — Kill Switch</h3><p>A one-tap Panic button that immediately destroys all sensitive data: local database (cryptotalk_secure.db), Keystore-backed passphrases, Firebase sessions, and all local cache and file directories. No trace remains.</p><span class="feat-tag">Immediate Data Destruction</span></div>
+      <div class="feat-card"><span class="feat-num">03.2</span><span class="feat-icon">🧬</span><h3>Biometric Authentication</h3><p>Secure app entry using fingerprint or face unlock. An independent authentication gate — the app stays locked even if the phone's own screen lock has been bypassed or is disabled.</p><span class="feat-tag">Fingerprint · Face Unlock</span></div>
+      <div class="feat-card"><span class="feat-num">03.3</span><span class="feat-icon">🛡</span><h3>App Integrity Verification</h3><p>Built-in checks verify that the APK has not been tampered with or modified. Detects unofficial re-signed builds and alerts the user before any sensitive cryptographic operations are performed.</p><span class="feat-tag">Anti-Tamper · APK Verification</span></div>
+      <div class="feat-card"><span class="feat-num">03.4</span><span class="feat-icon">🔑</span><h3>Safety Numbers</h3><p>A mechanism to verify the authenticity of a contact's public keys — preventing Man-in-the-Middle (MITM) attacks. Users can compare safety numbers out-of-band to confirm a secure, unintercepted channel.</p><span class="feat-tag">MITM Prevention · Key Verification</span></div>
+    </div>
+
+    <!-- CATEGORY 4: IDENTITY -->
+    <div class="reveal" style="margin-top:3rem;">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#ffaa00;letter-spacing:0.2em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(255,170,0,0.2);background:rgba(255,170,0,0.04);">04 · User Identity &amp; Customization</div>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+    </div>
+    <div class="feat-grid reveal">
+      <div class="feat-card"><span class="feat-num">04.1</span><span class="feat-icon">👤</span><h3>Dynamic Profile Management</h3><p>Update display name, bio, and status in real-time. Changes sync instantly to Firestore. No page reloads, no delays — profile data reflects immediately across all active conversations and contact lists.</p><span class="feat-tag">Real-Time Profile Sync</span></div>
+      <div class="feat-card"><span class="feat-num">04.2</span><span class="feat-icon">🏷</span><h3>Contact Nicknames</h3><p>Assign private, local-only nicknames to contacts to further obscure real identities in the chat list. Nicknames do not sync to the server and don't need to match the phone's address book — granular identity control.</p><span class="feat-tag">Local-Only · Private Aliases</span></div>
+      <div class="feat-card"><span class="feat-num">04.3</span><span class="feat-icon">🎨</span><h3>Premium Dark Theme Engine</h3><p>Modern, high-contrast dark theme with consistent UX across different Android OEM skins. Specific optimizations for Xiaomi/MIUI ensure the interface renders correctly on fragmented Android hardware.</p><span class="feat-tag">Cyber-Noir · MIUI Optimized</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="container">
+    <div class="reveal">
+      <div class="sec-label">Technical Architecture</div>
+      <h2 class="sec-title">MVVM + Clean<br/><span class="hl">Architecture</span></h2>
+      <p class="sec-desc">A strict separation-of-concerns foundation built for testability, lifecycle safety, and a clean single-source-of-truth data flow from hardware TEE to Jetpack Compose UI.</p>
+    </div>
+    <div class="arch-grid">
+      <div class="arch-layers reveal">
+        <div class="arch-layer"><div class="arch-layer-ic">🖥</div><div><h4>View — Jetpack Compose</h4><p>Fully declarative, state-driven UI. The View is "dumb" — it displays ViewModel state and forwards interactions. No business logic, no data access, no awareness of Firestore.</p><div class="lt">com.cryptotalk.app.ui</div></div></div>
+        <div class="arch-layer"><div class="arch-layer-ic">🧠</div><div><h4>ViewModel — Lifecycle-Aware Brain</h4><p>Manages UI state via Kotlin Coroutines and StateFlow. Lifecycle-aware — survives screen rotations. Communicates only with Repositories, never with Firebase or Keystore directly.</p><div class="lt">StateFlow · Coroutines · lifecycle-aware</div></div></div>
+        <div class="arch-layer"><div class="arch-layer-ic">🗄</div><div><h4>Repository — Single Source of Truth</h4><p>AuthRepository, MessageRepository, UserRepository. Whether data is from local Room DB or remote Firestore, the ViewModel never knows. MessageRepository owns the full encrypt/decrypt pipeline.</p><div class="lt">com.cryptotalk.app.data.repository</div></div></div>
+        <div class="arch-layer"><div class="arch-layer-ic">🔐</div><div><h4>Crypto Engine</h4><p>MessageCrypto.kt orchestrates AES key generation via CSRNG, GCM authenticated encryption, RSA public key fetching from Firestore, and key wrapping per participant. Fully isolated from UI.</p><div class="lt">com.cryptotalk.app.crypto</div></div></div>
+        <div class="arch-layer"><div class="arch-layer-ic">⚡</div><div><h4>Firebase Firestore + Google OAuth</h4><p>Real-time NoSQL sync for encrypted payloads. Firebase Auth via Google OAuth inherits world-class security infrastructure including 2FA and hardware security keys — treated as a zero-trust relay.</p><div class="lt">Firestore · Firebase Auth · Google OAuth</div></div></div>
+      </div>
+      <div class="reveal" style="display:flex;flex-direction:column;">
+        <div class="code-block"><span class="cm">// MessageCrypto.kt — AES/GCM/NoPadding</span>
+<span class="kw">val</span> <span class="fn">cipher</span> = Cipher.getInstance(
+  <span class="str">"AES/GCM/NoPadding"</span>
+)
+<span class="kw">val</span> <span class="fn">spec</span> = GCMParameterSpec(
+  <span class="nm">128</span>, iv <span class="cm">// 128-bit authentication tag</span>
+)
+cipher.init(
+  Cipher.ENCRYPT_MODE,
+  aesKey, spec
+)
+<span class="cm">// AEAD: confidentiality + integrity</span></div>
+        <div class="code-block"><span class="cm">// KeystoreHelper.kt — RSA in Hardware TEE</span>
+<span class="kw">val</span> <span class="fn">gen</span> = KeyPairGenerator.getInstance(
+  KeyProperties.KEY_ALGORITHM_RSA,
+  <span class="str">"AndroidKeyStore"</span>
+)
+gen.initialize(
+  KeyGenParameterSpec.Builder(alias,
+    PURPOSE_ENCRYPT <span class="kw">or</span> PURPOSE_DECRYPT)
+    .setKeySize(<span class="nm">2048</span>)
+    .setDigests(DIGEST_SHA256)
+    .build()
+)
+<span class="cm">// Private key: hardware-bound, non-extractable</span></div>
+        <div class="code-block"><span class="cm">// Firestore payload — zero plaintext server</span>
+{
+  <span class="str">"ciphertext"</span>: <span class="str">"Qx9p+fE2wR4mKo..."</span>,
+  <span class="str">"iv"</span>: <span class="str">"base64_12_byte_nonce"</span>,
+  <span class="str">"participantKeys"</span>: {
+    <span class="str">"userA"</span>: <span class="str">"RSA_wrapped_AES_key_A"</span>,
+    <span class="str">"userB"</span>: <span class="str">"RSA_wrapped_AES_key_B"</span>
+  }
+}
+<span class="cm">// Server sees only encrypted blobs</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DISGUISE -->
+<section id="disguise">
+  <div class="container">
+    <div class="dis-grid">
+      <div class="reveal">
+        <div class="sec-label">Physical Privacy</div>
+        <h2 class="sec-title">The Chameleon<br/><span class="hl">Effect</span></h2>
+        <p class="sec-desc">Conventional secure messengers protect message content but not the context of the app's existence. CryptoTalk solves this with <code style="color:var(--cyan);">&lt;activity-alias&gt;</code> entries in AndroidManifest.xml. DisguiseManager.kt calls the system PackageManager to disable the real launcher and enable a fake one — surviving updates and reboots.</p>
+        <div class="terminal" style="margin-top:2rem;max-width:420px;">
+          <div class="t-cm">// DisguiseManager.kt</div>
+          <div class="t-cmd">$ set-alias --mode CALCULATOR</div>
+          <div class="t-out">✓ Real launcher: DISABLED</div>
+          <div class="t-out">✓ Alias: com.cryptotalk.calculator</div>
+          <div class="t-out">✓ PackageManager state: persisted</div>
+          <div class="t-out">✓ Survives: updates + reboots</div>
+          <div class="t-warn">→ App is now invisible as a messenger</div>
+        </div>
+      </div>
+      <div class="dis-modes reveal">
+        <div class="mode-card"><div class="mode-ic">🧮</div><h4>Calculator</h4><p>Fully functional arithmetic calculator UI — not a blank screen. Completely convincing decoy that actually computes.</p><div class="mode-unlock">UNLOCK → Enter code + press "="</div></div>
+        <div class="mode-card"><div class="mode-ic">🌤</div><h4>Weather</h4><p>Live current weather display with real location data. Indistinguishable from any standard weather utility app.</p><div class="mode-unlock">UNLOCK → Tap temperature × 5 rapidly</div></div>
+        <div class="mode-card" style="grid-column:span 2;"><div class="mode-ic">🔐</div><h4>CryptoTalk (Standard)</h4><p>The real app identity — visible when you're in a trusted environment. Switch between modes at any time via the dedicated Disguise Settings panel without reinstalling or rebooting.</p><div class="mode-unlock">MANAGED → via Disguise Settings Panel</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CRYPTO ENGINE -->
+<section id="crypto">
+  <div class="container">
+    <div class="reveal" style="text-align:center;">
+      <div class="sec-label" style="justify-content:center;">Cryptographic Engine</div>
+      <h2 class="sec-title">The Lifecycle of<br/>an <span class="hl">Unbreakable</span> Message</h2>
+      <p class="sec-desc" style="margin:0 auto;">A unique 256-bit AES key and fresh 12-byte IV are generated by a CSRNG for every single message. GCM mode provides confidentiality, integrity, and authenticity simultaneously — unlike CBC which is vulnerable to Padding Oracle Attacks.</p>
+    </div>
+    <div class="c-flow reveal">
+      <div class="c-step"><div class="sn">STEP 01</div><div class="si">💬</div><div class="sl">Plaintext</div><div class="sd">"Hello"</div></div>
+      <div class="c-arrow">→</div>
+      <div class="c-step"><div class="sn">STEP 02</div><div class="si">🎲</div><div class="sl">CSRNG Keys</div><div class="sd">AES-256 + 12B IV</div></div>
+      <div class="c-arrow">→</div>
+      <div class="c-step"><div class="sn">STEP 03</div><div class="si">🔒</div><div class="sl">AES/GCM</div><div class="sd">AEAD Encrypt</div></div>
+      <div class="c-arrow">→</div>
+      <div class="c-step"><div class="sn">STEP 04</div><div class="si">🗝</div><div class="sl">RSA Wrap</div><div class="sd">Per-Recipient Key</div></div>
+      <div class="c-arrow">→</div>
+      <div class="c-step"><div class="sn">STEP 05</div><div class="si">☁</div><div class="sl">Firestore</div><div class="sd">Ciphertext Only</div></div>
+      <div class="c-arrow">→</div>
+      <div class="c-step"><div class="sn">STEP 06</div><div class="si">🔓</div><div class="sl">TEE Unwrap</div><div class="sd">RSA → AES Key</div></div>
+      <div class="c-arrow">→</div>
+      <div class="c-step"><div class="sn">STEP 07</div><div class="si">✅</div><div class="sl">GCM Verify</div><div class="sd">Auth Tag ✓</div></div>
+    </div>
+    <div class="c-tags reveal">
+      <div class="ctb"><div class="cl">ASYMMETRIC LAYER</div><div class="cv">RSA</div><div class="cs">2048-bit · Key Exchange Only</div></div>
+      <div class="ctb gr"><div class="cl">SYMMETRIC LAYER</div><div class="cv">AES/GCM/NoPadding</div><div class="cs">256-bit · 12-byte IV · AEAD</div></div>
+      <div class="ctb pu"><div class="cl">STORAGE LAYER</div><div class="cv">Android Keystore</div><div class="cs">Hardware TEE · Non-Extractable</div></div>
+    </div>
+    <div class="reveal" style="margin:2.5rem auto 0;max-width:700px;padding:2rem;border:1px solid var(--border);background:rgba(0,229,255,0.02);">
+      <div class="sec-label" style="margin-bottom:0.75rem;">Why AES-GCM and not AES-CBC?</div>
+      <p style="font-size:0.9rem;color:#7a9ab0;line-height:1.8;">CBC mode is vulnerable to Padding Oracle Attacks. GCM is an <strong style="color:#fff;">AEAD</strong> mode providing three guarantees simultaneously: <strong style="color:var(--green);">Confidentiality</strong> (no one reads the data), <strong style="color:var(--green);">Integrity</strong> (a single-bit modification fails decryption), and <strong style="color:var(--green);">Authenticity</strong> (mathematical proof data is untampered) — via a 128-bit authentication tag appended to every ciphertext.</p>
+    </div>
+  </div>
+</section>
+
+<!-- THREAT MODEL -->
+<section id="threats">
+  <div class="container">
+    <div class="reveal">
+      <div class="sec-label">Threat Model</div>
+      <h2 class="sec-title">Known Threats,<br/><span class="hl">Active</span> Mitigations</h2>
+      <p class="sec-desc">CryptoTalk's architecture was designed by cataloging real-world attack vectors and engineering a specific countermeasure for each. The greatest threat to E2EE is not the Man-in-the-Middle — it's the Man-at-the-Endpoint.</p>
+    </div>
+    <div class="thr-grid reveal">
+      <div class="thr-card"><div class="thr-head"><div class="thr-icon">🕵</div><h4>Metadata Harvesting</h4></div><p>Traditional apps track who you communicate with, when, and from where — even when the content is encrypted. This data is often sold or subpoenaed.</p><div class="mitig">→ Minimized Firestore schema. Zero plaintext metadata. Data minimization by design.</div></div>
+      <div class="thr-card"><div class="thr-head"><div class="thr-icon">☁</div><h4>Cloud Cleartext Backup</h4></div><p>Many apps store unencrypted or provider-accessible backups. A single cloud breach exposes years of communications in plaintext.</p><div class="mitig">→ Zero-knowledge server. Firebase mathematically cannot read any stored data.</div></div>
+      <div class="thr-card"><div class="thr-head"><div class="thr-icon">🔓</div><h4>Software Key Storage</h4></div><p>Keys stored in app private storage are vulnerable to root exploits, malware with elevated privilege, or memory scraping attacks.</p><div class="mitig">→ Android Keystore TEE. Private key is hardware-bound and cryptographically non-extractable.</div></div>
+      <div class="thr-card"><div class="thr-head"><div class="thr-icon">👁</div><h4>Physical Device Access</h4></div><p>An unauthorized person gaining access to an unlocked phone sees the secure messenger icon — the app's existence itself becomes incriminating.</p><div class="mitig">→ Disguise Mode makes the app invisible. Biometric Gate keeps it locked independently.</div></div>
+      <div class="thr-card"><div class="thr-head"><div class="thr-icon">🎯</div><h4>Man-at-the-Endpoint</h4></div><p>Screen scrapers, keyloggers, or Frida/Xposed hooks capture plaintext before it is encrypted — rendering E2EE irrelevant at the endpoint.</p><div class="mitig">→ FLAG_SECURE blocks OS-level capture. IntegrityCheck detects Frida, Xposed, and debugger hooks.</div></div>
+      <div class="thr-card"><div class="thr-head"><div class="thr-icon">🚨</div><h4>Forced Device Seizure</h4></div><p>A coercive actor forces device unlock, exposing stored messages, conversation history, and contact lists to forensic analysis.</p><div class="mitig">→ Panic Wipe: Firebase logout + DB deletion + cache purge + process kill in one action.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section id="comparison">
+  <div class="container">
+    <div class="reveal">
+      <div class="sec-label">Competitive Analysis</div>
+      <h2 class="sec-title">Beyond Signal.<br/>Beyond <span class="hl">Telegram.</span></h2>
+      <p class="sec-desc">Mainstream messengers protect message content. CryptoTalk also protects the <em style="color:var(--cyan);">context</em> of the app's very existence on your device — a security dimension none of them address.</p>
+    </div>
+    <table class="cmp-tbl reveal">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th class="ours">CryptoTalk</th>
+          <th>Signal</th>
+          <th>Telegram</th>
+          <th>WhatsApp</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="hlr">
+          <td>Primary Encryption</td>
+          <td><span class="ck">Hybrid RSA + AES-256-GCM</span></td>
+          <td><span style="color:#c8d8e8;font-size:0.82rem;">Signal Protocol (Double Ratchet)</span></td>
+          <td><span style="color:#c8d8e8;font-size:0.82rem;">MTProto 2.0 (Custom)</span></td>
+          <td><span style="color:#c8d8e8;font-size:0.82rem;">Signal Protocol</span></td>
+        </tr>
+        <tr>
+          <td>End-to-End Encrypted (E2EE)</td>
+          <td><span class="ck">✓ ALWAYS (Client-side)</span></td>
+          <td><span class="ck">✓ ALWAYS</span></td>
+          <td><span class="pt">Optional (Secret Chats only)</span></td>
+          <td><span class="ck">✓ ALWAYS</span></td>
+        </tr>
+        <tr class="hlr">
+          <td>Stealth / Disguise Mode</td>
+          <td><span class="ck">✓ Icon + Name Change + Fake Calculator UI</span></td>
+          <td><span class="cr">✗ NO</span></td>
+          <td><span class="cr">✗ NO</span></td>
+          <td><span class="cr">✗ NO</span></td>
+        </tr>
+        <tr>
+          <td>Emergency Panic Wipe</td>
+          <td><span class="ck">✓ Immediate local data destruction</span></td>
+          <td><span class="cr">✗ NO</span></td>
+          <td><span class="cr">✗ NO</span></td>
+          <td><span class="cr">✗ NO</span></td>
+        </tr>
+        <tr class="hlr">
+          <td>Local Private Key Storage</td>
+          <td><span class="ck">✓ Android Keystore (Hardware-backed)</span></td>
+          <td><span class="pt">Memory / file system (Secure)</span></td>
+          <td><span class="pt">Stored locally</span></td>
+          <td><span class="pt">Stored locally</span></td>
+        </tr>
+        <tr>
+          <td>Identity / Anonymity</td>
+          <td><span class="ck">✓ Nicknames &amp; Pseudonyms</span></td>
+          <td><span class="cr">Tied to Phone Number</span></td>
+          <td><span class="pt">Phone Number / Username</span></td>
+          <td><span class="cr">Tied to Phone Number</span></td>
+        </tr>
+        <tr class="hlr">
+          <td>Safety Numbers (MITM Verification)</td>
+          <td><span class="ck">✓ YES</span></td>
+          <td><span class="ck">✓ YES</span></td>
+          <td><span class="cr">✗ NO</span></td>
+          <td><span class="pt">Limited</span></td>
+        </tr>
+        <tr>
+          <td>Data &amp; Backup Protection</td>
+          <td><span class="ck">✓ Local encrypted DB + Wipe</span></td>
+          <td><span class="ck">✓ Secure storage</span></td>
+          <td><span class="cr">Cloud-synced (excl. Secret Chats)</span></td>
+          <td><span class="cr">Cloud-backed, unencrypted metadata</span></td>
+        </tr>
+        <tr class="hlr">
+          <td>App Integrity / Tamper Detection</td>
+          <td><span class="ck">✓ Built-in APK verification</span></td>
+          <td><span class="cr">✗ NO</span></td>
+          <td><span class="cr">✗ NO</span></td>
+          <td><span class="cr">✗ NO</span></td>
+        </tr>
+        <tr>
+          <td>Biometric Authentication Gate</td>
+          <td><span class="ck">✓ Fingerprint + Face Unlock</span></td>
+          <td><span class="pt">Optional</span></td>
+          <td><span class="pt">Optional</span></td>
+          <td><span class="pt">Optional</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- WHY CRYPTOTALK STANDS OUT -->
+    <div class="reveal" style="margin-top:5rem;">
+      <div class="sec-label">Why CryptoTalk Stands Out</div>
+      <h2 class="sec-title" style="font-size:clamp(1.5rem,3.5vw,2.5rem);margin-bottom:3rem;">Four Reasons No Other App<br/>Comes <span class="hl">Close</span></h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;" class="reveal">
+
+      <div style="padding:2.5rem 2rem;border:1px solid rgba(0,229,255,0.15);background:rgba(0,229,255,0.03);position:relative;overflow:hidden;transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(0,229,255,0.5)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='rgba(0,229,255,0.15)';this.style.transform='translateY(0)'">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);"></div>
+        <div style="font-size:2rem;margin-bottom:1rem;">👁‍🗨</div>
+        <h4 style="font-family:'Orbitron',monospace;font-size:0.9rem;color:#fff;margin-bottom:0.75rem;">The "Invisible" Presence</h4>
+        <p style="font-size:0.85rem;color:#6a8090;line-height:1.7;">Signal and WhatsApp offer locked chats but remain <em style="color:#c8d8e8;">visible</em> as messaging apps. CryptoTalk disguises itself as a Calculator or Weather app — including a functional decoy UI — providing Plausible Deniability that no other major messenger offers.</p>
+      </div>
+
+      <div style="padding:2.5rem 2rem;border:1px solid rgba(255,68,102,0.15);background:rgba(255,68,102,0.03);position:relative;overflow:hidden;transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(255,68,102,0.5)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='rgba(255,68,102,0.15)';this.style.transform='translateY(0)'">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#ff4466,transparent);"></div>
+        <div style="font-size:2rem;margin-bottom:1rem;">💥</div>
+        <h4 style="font-family:'Orbitron',monospace;font-size:0.9rem;color:#fff;margin-bottom:0.75rem;">Immediate Data Destruction</h4>
+        <p style="font-size:0.85rem;color:#6a8090;line-height:1.7;">In high-risk situations, "deleting a chat" is not enough. CryptoTalk's Panic Wipe is a hardware-integrated kill-switch that nukes the database, Keystore assets, and session tokens in seconds — a seized device contains no readable forensic data.</p>
+      </div>
+
+      <div style="padding:2.5rem 2rem;border:1px solid rgba(0,255,136,0.15);background:rgba(0,255,136,0.03);position:relative;overflow:hidden;transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(0,255,136,0.5)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='rgba(0,255,136,0.15)';this.style.transform='translateY(0)'">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);"></div>
+        <div style="font-size:2rem;margin-bottom:1rem;">🔩</div>
+        <h4 style="font-family:'Orbitron',monospace;font-size:0.9rem;color:#fff;margin-bottom:0.75rem;">Hardware-First Security</h4>
+        <p style="font-size:0.85rem;color:#6a8090;line-height:1.7;">By leveraging the Android Keystore, CryptoTalk ensures private keys never touch application RAM in readable format. They cannot be extracted even by rooted devices or sophisticated malware — hardware makes the difference.</p>
+      </div>
+
+      <div style="padding:2.5rem 2rem;border:1px solid rgba(139,92,246,0.15);background:rgba(139,92,246,0.03);position:relative;overflow:hidden;transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(139,92,246,0.5)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='rgba(139,92,246,0.15)';this.style.transform='translateY(0)'">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--purple),transparent);"></div>
+        <div style="font-size:2rem;margin-bottom:1rem;">🎛</div>
+        <h4 style="font-family:'Orbitron',monospace;font-size:0.9rem;color:#fff;margin-bottom:0.75rem;">Customizable Privacy</h4>
+        <p style="font-size:0.85rem;color:#6a8090;line-height:1.7;">Unlike mass-market apps that prioritize ease-of-use with automatic contact syncing, CryptoTalkgives users granular control over their digital footprint — including Contact Nicknames that don't match the phone's address book.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- MATH -->
+<section id="math">
+  <div class="container">
+    <div class="reveal" style="text-align:center;">
+      <div class="sec-label" style="justify-content:center;">Mathematical Foundations</div>
+      <h2 class="sec-title">The <span class="hl">Math</span> Behind<br/>Unbreakable Encryption</h2>
+    </div>
+    <div class="math-grid reveal">
+      <div class="math-card">
+        <h4>RSA — Asymmetric Cryptography</h4>
+        <ul class="math-steps">
+          <li>Pick two large primes <span class="mf">p</span> and <span class="mf">q</span></li>
+          <li>Compute modulus <span class="mf">n = p × q</span></li>
+          <li>Compute Euler totient <span class="mf">φ(n) = (p-1)(q-1)</span></li>
+          <li>Choose integer <span class="mf">e</span> coprime to φ(n)</li>
+          <li>Compute private exponent <span class="mf">d = e⁻¹ mod φ(n)</span></li>
+          <li>Public key: <span class="mf">(e, n)</span> — uploaded to Firestore</li>
+          <li>Private key: <span class="mf">(d, n)</span> — locked in hardware TEE</li>
+          <li>Encrypt: <span class="mf">c = mᵉ mod n</span> · Decrypt: <span class="mf">m = cᵈ mod n</span></li>
+          <li>Security: factoring <span class="mf">n = p × q</span> is computationally infeasible at 2048 bits</li>
+        </ul>
+      </div>
+      <div class="math-card">
+        <h4>AES-256-GCM — Authenticated Symmetric Encryption</h4>
+        <ul class="math-steps">
+          <li><strong style="color:#fff;">SubBytes</strong> — Non-linear byte substitution via S-Box lookup table</li>
+          <li><strong style="color:#fff;">ShiftRows</strong> — Cyclic transposition of last three state rows</li>
+          <li><strong style="color:#fff;">MixColumns</strong> — Linear mixing operation on state columns via GF(2⁸)</li>
+          <li><strong style="color:#fff;">AddRoundKey</strong> — Each byte XORed with the round key block</li>
+          <li>Repeated across <span class="mf">14 rounds</span> for a 256-bit key</li>
+          <li>GCM appends a <span class="mf">128-bit authentication tag</span> for integrity</li>
+          <li>Any modification causes <span class="mf">tag verification failure</span> and decryption abort</li>
+          <li>IV must be unique per encryption — CryptoTalk uses CSRNG <span class="mf">12-byte nonce</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+      <div style="padding:1rem 1.5rem;border:1px solid var(--border);background:rgba(0,229,255,0.02);font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#7a9ab0;max-width:280px;"><span style="color:var(--cyan);">CSRNG</span><br/>Cryptographically Secure Random Number Generator used to produce AES session keys and IVs per message.</div>
+      <div style="padding:1rem 1.5rem;border:1px solid var(--border);background:rgba(0,229,255,0.02);font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#7a9ab0;max-width:280px;"><span style="color:var(--cyan);">Base64</span><br/>Binary ciphertext, IV, and wrapped keys are encoded as ASCII strings for Firestore document storage.</div>
+      <div style="padding:1rem 1.5rem;border:1px solid var(--border);background:rgba(0,229,255,0.02);font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#7a9ab0;max-width:280px;"><span style="color:var(--cyan);">AEAD</span><br/>Authenticated Encryption with Associated Data — GCM mode delivers confidentiality + integrity + authenticity in one pass.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="container">
+    <div class="reveal">
+      <div class="sec-label">Development Roadmap</div>
+      <h2 class="sec-title">The Path<br/><span class="hl">Forward</span></h2>
+      <p class="sec-desc">Each phase increases the cost for adversaries while maintaining user convenience. CryptoTalk is an evolving platform committed to staying ahead of the threat landscape.</p>
+    </div>
+    <div class="rm-list">
+      <div class="rm-item reveal"><div class="rm-tag td">SHIPPED</div><div><div class="rm-ph">PHASE 0 — CORE</div><h4>Hybrid Encryption Engine (RSA-2048 + AES-256-GCM)</h4><p>Full cryptographic pipeline with Android Keystore TEE, per-message CSRNG IV, participant key wrapping, and GCM authentication tag verification on every message received.</p></div></div>
+      <div class="rm-item reveal"><div class="rm-tag td">SHIPPED</div><div><div class="rm-ph">PHASE 0 — CORE</div><h4>Disguise Mode + Panic Wipe System</h4><p>Four disguise modes via activity-alias PackageManager switching persisting across reboots. SecurityWipeManager with Firebase logout, DB wipe, cache purge, and process termination in one action.</p></div></div>
+      <div class="rm-item reveal"><div class="rm-tag td">SHIPPED</div><div><div class="rm-ph">PHASE 0 — CORE</div><h4>Integrity Shield + FLAG_SECURE + Biometric Gate</h4><p>Runtime root/debugger/hook detection, universal forced screenshot blocking, and multi-level biometric authentication layer independent of device lock screen.</p></div></div>
+      <div class="rm-item reveal"><div class="rm-tag nx">PHASE 1</div><div><div class="rm-ph">STABILITY &amp; POLISH</div><h4>Encrypted Media + Self-Destructing Messages</h4><p>Extend hybrid encryption to photos, videos, and voice notes with unique per-file AES keys stored encrypted in Firestore. TTL-based message documents auto-vanish from cloud and device.</p></div></div>
+      <div class="rm-item reveal"><div class="rm-tag nx">PHASE 2</div><div><div class="rm-ph">SCALABILITY</div><h4>Encrypted Group Chats + Secure Multi-Device Sync</h4><p>Multi-Party Key Exchange: one Group AES Key encrypted per participant using their individual RSA key. QR-code based key sharing for multi-device without compromising hardware-bound private keys.</p></div></div>
+      <div class="rm-item reveal"><div class="rm-tag fu">PHASE 3</div><div><div class="rm-ph">ENTERPRISE &amp; PHYSICAL</div><h4>Remote Wipe + Desktop Client + Metadata Obfuscation</h4><p>Trigger SecurityWipeManager remotely from a secondary device on phone theft. Rust-based desktop client. Dummy traffic injection to hide communication patterns from network-level observers.</p></div></div>
+      <div class="rm-item reveal"><div class="rm-tag fu">FUTURE</div><div><div class="rm-ph">POST-QUANTUM</div><h4>Kyber (PQC) + Decentralized Identity (DID)</h4><p>Replace RSA with NIST-standardized Kyber lattice-based key encapsulation for quantum-computer resistance. Remove Firebase Auth — migrate to peer-to-peer identity discovery with no central authority.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section id="download">
+  <div class="container">
+    <div class="reveal" style="text-align:center;">
+      <div class="sec-label" style="justify-content:center;">Get The App</div>
+      <h2 class="sec-title">Download<br/><span class="hl">CryptoTalk</span></h2>
+      <p class="sec-desc" style="margin:0 auto;">Zero-trust encrypted messaging for Android. Available now on GitHub Releases — free, open-source, no tracking.</p>
+    </div>
+
+    <div style="display:flex;justify-content:center;" class="reveal">
+      <div class="dl-card" style="max-width:820px;width:100%;">
+
+        <!-- TOP ROW: QR + INFO -->
+        <div style="display:flex;gap:3rem;align-items:center;flex-wrap:wrap;justify-content:center;width:100%;position:relative;z-index:1;margin-bottom:2.5rem;">
+
+          <!-- QR CODE -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;">
+            <div style="position:relative;padding:12px;background:#04060d;border:1px solid rgba(0,229,255,0.3);box-shadow:0 0 30px rgba(0,229,255,0.12);">
+              <!-- Corner accents -->
+              <div style="position:absolute;top:-1px;left:-1px;width:18px;height:18px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan);"></div>
+              <div style="position:absolute;top:-1px;right:-1px;width:18px;height:18px;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan);"></div>
+              <div style="position:absolute;bottom:-1px;left:-1px;width:18px;height:18px;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan);"></div>
+              <div style="position:absolute;bottom:-1px;right:-1px;width:18px;height:18px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan);"></div>
+              <canvas id="qr-canvas" style="display:block;image-rendering:pixelated;"></canvas>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--dim);letter-spacing:0.12em;text-align:center;">SCAN TO DOWNLOAD APK<br/><span style="color:var(--cyan);">v1.0.0 · Android 8.0+</span></div>
+          </div>
+
+          <!-- APP INFO -->
+          <div style="text-align:left;flex:1;min-width:220px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--dim);letter-spacing:0.2em;margin-bottom:1rem;">AVAILABLE NOW · GITHUB RELEASES</div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:#fff;letter-spacing:0.06em;line-height:1;">CRYPTO<span style="color:var(--cyan);">TALK</span></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--dim);margin-top:0.4rem;letter-spacing:0.1em;">v1.0.0 · com.application.cryptotalk</div>
+
+            <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:0.5rem;">
+              <div style="display:flex;align-items:center;gap:0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#7a9ab0;">
+                <span style="color:var(--green);font-size:0.8rem;">✓</span> RSA-2048 + AES-256-GCM Encryption
+              </div>
+              <div style="display:flex;align-items:center;gap:0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#7a9ab0;">
+                <span style="color:var(--green);font-size:0.8rem;">✓</span> Android Keystore Hardware Security
+              </div>
+              <div style="display:flex;align-items:center;gap:0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#7a9ab0;">
+                <span style="color:var(--green);font-size:0.8rem;">✓</span> Disguise Mode + Panic Wipe
+              </div>
+              <div style="display:flex;align-items:center;gap:0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#7a9ab0;">
+                <span style="color:var(--green);font-size:0.8rem;">✓</span> No Ads · No Tracking  
+              </div>
+              <div style="display:flex;align-items:center;gap:0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#7a9ab0;">
+                <span style="color:var(--green);font-size:0.8rem;">✓</span> Free · Android 8.0+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DOWNLOAD BUTTONS -->
+        <div class="dl-btns" style="width:100%;position:relative;z-index:1;">
+
+          <!-- DIRECT FAST DOWNLOAD — PRIMARY -->
+          <a class="dl-btn" href="https://github.com/karan942006/CryptoTalkApp/releases/download/CryptoTalk/app-debug.apk"
+             download="CryptoTalk.apk"
+             style="border-color:var(--cyan);background:rgba(0,229,255,0.08);flex:1;min-width:200px;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);"></div>
+            <span class="di" style="font-size:1.8rem;">⬇</span>
+            <div class="dt">
+              <small style="color:var(--cyan);">Direct Fast Download</small>
+              <strong style="color:#fff;">Download APK</strong>
+              <span style="display:block;font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:0.1rem;">CryptoTalk.apk · v1.0.0</span>
+            </div>
+          </a>
+
+          <!-- GITHUB RELEASES -->
+          <a class="dl-btn" href="https://github.com/karan942006/CryptoTalkApp/releases/download/CryptoTalk/app-debug.apk"
+             target="_blank" rel="noopener"
+             style="flex:1;min-width:200px;">
+            <span class="di" style="font-size:1.8rem;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="color:#c8d8e8;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            </span>
+            <div class="dt">
+              <small>GitHub Releases</small>
+              <strong>View on GitHub</strong>
+              <span style="display:block;font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:0.1rem;">karan942006/CryptoTalk1</span>
+            </div>
+          </a>
+
+          <!-- PLAY STORE — COMING SOON -->
+          <a class="dl-btn" href="#"
+             onclick="this.style.animation='shake 0.3s';setTimeout(()=>this.style.animation='',300);return false;"
+             style="flex:1;min-width:200px;opacity:0.6;cursor:not-allowed;position:relative;">
+            <div style="position:absolute;top:8px;right:10px;font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:#ffaa00;letter-spacing:0.08em;border:1px solid rgba(255,170,0,0.4);padding:1px 5px;">SOON</div>
+            <span class="di" style="font-size:1.8rem;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="color:#c8d8e8;"><path d="M3.18 23.76c.3.18.66.18.96 0l12.54-7.26-2.76-2.76L3.18 23.76zM.42 1.08C.15 1.38 0 1.8 0 2.34v19.32c0 .54.15.96.42 1.26l.06.06 10.8-10.8v-.24L.48 1.02l-.06.06zm19.68 8.88l-2.76-1.62-3.12 3.12 3.12 3.12 2.76-1.62c.78-.48.78-1.5 0-2.02l-.0.02zM4.14.24L16.68 7.5l-2.76 2.76L3.18.24c.3-.18.66-.18.96 0z"/></svg>
+            </span>
+            <div class="dt">
+              <small>Get it on</small>
+              <strong>Google Play</strong>
+              <span style="display:block;font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:#ffaa00;margin-top:0.1rem;">Coming Soon</span>
+            </div>
+          </a>
+
+        </div>
+
+        <!-- URL DISPLAY -->
+        <div style="position:relative;z-index:1;margin-top:2rem;width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(0,229,255,0.1);padding:0.75rem 1.25rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;">Direct Link</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--cyan);word-break:break-all;flex:1;">https://github.com/karan942006/CryptoTalk1/releases/download/v1.0.0/CryptoTalk.apk</span>
+          <button onclick="navigator.clipboard.writeText('https://github.com/karan942006/CryptoTalk1/releases/download/v1.0.0/CryptoTalk.apk');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy',2000);"
+            style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.3rem 0.8rem;background:transparent;border:1px solid rgba(0,229,255,0.3);color:var(--cyan);cursor:pointer;white-space:nowrap;transition:all 0.2s;letter-spacing:0.05em;"
+            onmouseover="this.style.background='rgba(0,229,255,0.1)'" onmouseout="this.style.background='transparent'">Copy</button>
+        </div>
+
+        <div class="dl-bgs" style="position:relative;z-index:1;margin-top:1.5rem;">
+          <span class="dl-bg">✓ Android 8.0+</span>
+          <span class="dl-bg">✓ Kotlin 1.9 · Jetpack Compose</span>
+          <span class="dl-bg">✓ No Ads · No Tracking</span>
+          <span class="dl-bg">✓ Free </span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
+
+<!-- QR CODE GENERATOR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function generateQR() {
+  const APK_URL = "https://github.com/karan942006/CryptoTalk1/releases/download/v1.0.0/CryptoTalk.apk";
+  const canvas = document.getElementById('qr-canvas');
+  const size = 180;
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Manual QR code via qrcodejs — create in hidden div then copy to canvas
+  const hiddenDiv = document.createElement('div');
+  hiddenDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+  document.body.appendChild(hiddenDiv);
+
+  try {
+    const qr = new QRCode(hiddenDiv, {
+      text: APK_URL,
+      width: size,
+      height: size,
+      colorDark: "#00e5ff",
+      colorLight: "#04060d",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    setTimeout(() => {
+      const img = hiddenDiv.querySelector('img') || hiddenDiv.querySelector('canvas');
+      if (img) {
+        if (img.tagName === 'CANVAS') {
+          ctx.drawImage(img, 0, 0, size, size);
+        } else {
+          const tempImg = new Image();
+          tempImg.onload = () => { ctx.drawImage(tempImg, 0, 0, size, size); };
+          tempImg.src = img.src;
+        }
+      }
+      document.body.removeChild(hiddenDiv);
+    }, 300);
+  } catch(e) {
+    // Fallback: draw styled placeholder
+    ctx.fillStyle = '#04060d';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#00e5ff';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SCAN QR', size/2, size/2 - 8);
+    ctx.fillText('(Load Online)', size/2, size/2 + 10);
+    document.body.removeChild(hiddenDiv);
+  }
+})();
+</script>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-logo">CRYPTO<span>TALK</span></div>
+  <div class="ft-tag"><h2><i>Made By</i></h2></div>
+  <div class="ft-tag"><h3><b><i>Shaila Mandkulkar · Karan Lingayat · Parth Kelaskar </i></b></h3></div>
+  <div class="ft-links">
+    <a href="#features">Features</a><a href="#architecture">Architecture</a><a href="#disguise">Disguise</a>
+    <a href="#crypto">Encryption</a><a href="#threats">Threats</a><a href="#math">Math</a>
+    <a href="#roadmap">Roadmap</a><a href="#download">Download</a>
+  </div>
+  <div class="ft-copy">© 2026 CryptoTalk · Senior Development Team · Document v1.0.4 · Privacy is a fundamental human right.</div>
+</footer>
+
+<script>
+// CURSOR
+const cursor=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px';});
+(function animRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing);})();
+document.querySelectorAll('a,button,.feat-card,.mode-card,.c-step,.dl-btn,.arch-layer,.thr-card,.rm-item').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ring.style.transform='translate(-50%,-50%) scale(1.8)';ring.style.opacity='0.8';});
+  el.addEventListener('mouseleave',()=>{ring.style.transform='translate(-50%,-50%) scale(1)';ring.style.opacity='0.5';});
+});
+
+// PARTICLES
+const canvas=document.getElementById('particle-canvas'),ctx=canvas.getContext('2d');
+let W,H;
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+resize();window.addEventListener('resize',resize);
+class P{
+  constructor(){this.reset();}
+  reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*1.5+0.3;this.vx=(Math.random()-0.5)*0.4;this.vy=(Math.random()-0.5)*0.4;this.o=Math.random()*0.4+0.05;this.h=Math.random()>0.7?160:195;}
+  update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset();}
+  draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle=`hsla(${this.h},100%,60%,${this.o})`;ctx.fill();}
+}
+const pts=[];for(let i=0;i<120;i++)pts.push(new P());
+function loop(){
+  ctx.clearRect(0,0,W,H);
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<100){ctx.beginPath();ctx.strokeStyle=`rgba(0,229,255,${0.06*(1-d/100)})`;ctx.lineWidth=0.5;ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();}}
+  pts.forEach(p=>{p.update();p.draw();});
+  requestAnimationFrame(loop);
+}
+loop();
+
+// REVEAL
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// COUNT-UP
+function countUp(el,t,dur=1500){if(isNaN(t))return;let s=0,step=t/dur*16;const ti=setInterval(()=>{s+=step;if(s>=t){el.textContent=t.toLocaleString();clearInterval(ti);}else el.textContent=Math.floor(s).toLocaleString();},16);}
+const sobs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=e.target.dataset.count;if(n)countUp(e.target,parseInt(n));sobs.unobserve(e.target);}}),{threshold:0.5});
+document.querySelectorAll('[data-count]').forEach(el=>sobs.observe(el));
+
+// NAV ACTIVE
+const sections=document.querySelectorAll('section[id]');
+window.addEventListener('scroll',()=>{const sy=window.scrollY;sections.forEach(s=>{const top=s.offsetTop-100,bot=top+s.offsetHeight;if(sy>=top&&sy<bot)document.querySelectorAll('.nav-links a').forEach(a=>{a.style.color=a.getAttribute('href')==='#'+s.id?'var(--cyan)':'';});});});
+</script>
+</body>
+</html>
