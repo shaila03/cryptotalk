@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Crypto Talk</string>
+    <string name="security_dashboard">Security Dashboard</string>
+    <string name="privacy_security">Privacy &amp; Security</string>
+    <string name="authentication">Authentication</string>
+    <string name="encryption">Encryption</string>
+    <string name="privacy_protection">Privacy Protection</string>
+    <string name="notification_privacy">Notification Privacy</string>
+    <string name="settings">Settings</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="conversations">Conversations</string>
+    <string name="new_message">New Message</string>
+    <string name="default_web_client_id">YOUR_CLIENT_ID_HERE</string>
+
+    <string name="disguise_none">CryptoTalk (Real Icon)</string>
+    <string name="disguise_calculator">Calculator</string>
+    <string name="disguise_notes">Notes</string>
+    <string name="disguise_weather">Weather</string>
+    <string name="disguise_files">Files</string>
+</resources>

@@ -1,0 +1,26 @@
+# Default ignored files
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# CLEANUP 7: These files contain secrets/machine-specific paths and MUST NEVER be committed
+google-services.json
+local.properties
+*.keystore
+*.jks
+keystore.properties
+
+# Node modules (for Cloud Functions)
+functions/node_modules/

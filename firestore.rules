@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isParticipant(conversationId) {
+      return isAuthenticated() && 
+        request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+    }
+
+    // -------------------------------------------------------------------------
+    // Users Collection
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      // Public profile (includes publicKey for encryption) is readable by all authenticated users.
+      allow read: if isAuthenticated();
+      
+      // Only the owner can manage their own public profile fields.
+      allow write: if isOwner(userId);
+
+      // Private Data Subcollection (email, FCM tokens, blocked users, encrypted backups)
+      match /private/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // User Lookup (for searching users by email)
+    // -------------------------------------------------------------------------
+    match /user_lookup/{email} {
+      // Allow searching by email document ID. listing (batch queries) is forbidden to prevent scraping.
+      allow get: if isAuthenticated();
+      
+      // Users create their own lookup entry during registration.
+      allow create, update: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow list: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Conversations (Direct Messages & Group Chats)
+    // -------------------------------------------------------------------------
+    match /conversations/{conversationId} {
+      
+      // Participants can view their conversations.
+      allow read: if isAuthenticated() && 
+        (resource == null || request.auth.uid in resource.data.participants);
+
+      // Allow creating a conversation if the requester is one of the participants.
+      allow create: if isAuthenticated() && 
+        request.auth.uid in request.resource.data.participants;
+
+      // Updates: name, members (for groups), and transient fields like typingUsers.
+      allow update: if isAuthenticated() && (
+        // Any participant can update typing indicators or lastMessageAt
+        request.auth.uid in resource.data.participants && 
+        (request.resource.data.diff(resource.data).affectedKeys().hasAny(['typingUsers', 'lastMessageAt', 'lastSeen']))
+        || 
+        // Admins can update anything (for groups)
+        (resource.data.isGroup == true && request.auth.uid in resource.data.admins)
+        ||
+        // For direct chats, participants can update restricted fields
+        (resource.data.isGroup != true && request.auth.uid in resource.data.participants)
+      );
+
+      allow delete: if isAuthenticated() && (
+        (resource.data.isGroup == true && request.auth.uid in resource.data.admins) ||
+        (resource.data.isGroup != true && request.auth.uid in resource.data.participants)
+      );
+
+      // -----------------------------------------------------------------------
+      // Messages Subcollection
+      // -----------------------------------------------------------------------
+      match /messages/{messageId} {
+        
+        // Only participants can read messages within a conversation.
+        allow read: if isParticipant(conversationId);
+
+        // Message Creation:
+        // 1. Must be a participant.
+        // 2. senderId must match authenticated UID (prevents impersonation).
+        allow create: if isParticipant(conversationId) && 
+          request.resource.data.senderId == request.auth.uid;
+
+        // Message Updates (Reactions, Read Status, Edits):
+        allow update: if isParticipant(conversationId) && (
+          // Sender can edit their own message text
+          (resource.data.senderId == request.auth.uid) ||
+          // Any participant can update reactions or status (read/delivered)
+          (request.resource.data.diff(resource.data).affectedKeys().hasAny(['reactions', 'status', 'readAt', 'expirationTime', 'starredBy']))
+        );
+
+        // Only the sender or a group admin can delete a message.
+        allow delete: if isParticipant(conversationId) && (
+          resource.data.senderId == request.auth.uid ||
+          get(/databases/$(database)/documents/conversations/$(conversationId)).data.admins.hasAny([request.auth.uid])
+        );
+      }
+    }
+    
+    // Default deny for all other collections
+  }
+}
+

@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Crypto Talk</string>
+    <string name="security_dashboard">Tableau de Bord Sécurité</string>
+    <string name="privacy_security">Confidentialité et Sécurité</string>
+    <string name="authentication">Authentification</string>
+    <string name="encryption">Chiffrement</string>
+    <string name="privacy_protection">Protection de la Vie Privée</string>
+    <string name="notification_privacy">Confidentialité des Notifications</string>
+    <string name="settings">Paramètres</string>
+    <string name="sign_out">Déconnexion</string>
+    <string name="conversations">Conversations</string>
+    <string name="new_message">Nouveau Message</string>
+</resources>

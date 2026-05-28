@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Crypto Talk</string>
+    <string name="security_dashboard">सुरक्षा डैशबोर्ड</string>
+    <string name="privacy_security">गोपनीयता और सुरक्षा</string>
+    <string name="authentication">प्रमाणीकरण</string>
+    <string name="encryption">एन्क्रिप्शन</string>
+    <string name="privacy_protection">गोपनीयता सुरक्षा</string>
+    <string name="notification_privacy">सूचना गोपनीयता</string>
+    <string name="settings">सेटिंग्स</string>
+    <string name="sign_out">साइन आउट करें</string>
+    <string name="conversations">बातचीत</string>
+    <string name="new_message">नया संदेश</string>
+</resources>

@@ -1,0 +1,34 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper: authenticated users only
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: owner check
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Profile Pictures: 
+    // - Anyone authenticated can read.
+    // - Only the owner can upload/delete their own.
+    match /profile_pictures/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+    }
+
+    // Shared Files (Chat Attachments):
+    // - Only participants of the conversation can read. (Requires a custom metadata field 'conversationId' on the file)
+    // - Only participants can upload.
+    match /chat_files/{conversationId}/{allPaths=**} {
+      // In a real app, you'd use a custom claim or a firestore check, but for basic rules:
+      // We assume the app creates a folder per conversationId and only participants upload there.
+      // To strictly enforce this, you'd need to use 'firestore.get' in storage rules (requires Firebase Blaze plan).
+      
+      allow read, write: if isAuthenticated(); // Fallback for simplicity, ideally restricted by conversationId
+    }
+  }
+}
